@@ -131,14 +131,37 @@
                     android:minLines="2" />
             </com.google.android.material.textfield.TextInputLayout>
 
-            <!-- Save Button -->
-            <Button
-                android:id="@+id/buttonSave"
+            <!-- Button Layout -->
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Save"
-                android:textAllCaps="false"
-                android:padding="12dp" />
+                android:orientation="horizontal">
+
+                <!-- Save Button -->
+                <Button
+                    android:id="@+id/buttonSave"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:text="Save"
+                    android:textAllCaps="false"
+                    android:padding="12dp" />
+
+                <!-- Delete Button (visible only in edit mode) -->
+                <Button
+                    android:id="@+id/buttonDelete"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:text="Delete"
+                    android:textAllCaps="false"
+                    android:padding="12dp"
+                    android:layout_marginStart="8dp"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:textColor="@android:color/holo_red_dark"
+                    android:visibility="gone"
+                    tools:visibility="visible" />
+            </LinearLayout>
 
         </LinearLayout>
     </ScrollView>

@@ -21,6 +21,13 @@
         <item name="windowNoTitle">true</item>
     </style>
 
+    <!-- Add Splash Screen Theme -->
+    <style name="Theme.PocketBrain.Splash" parent="Theme.PocketBrain.NoActionBar">
+        <item name="android:windowBackground">@color/primary</item>
+        <item name="android:statusBarColor">@color/primary</item>
+        <item name="android:navigationBarColor">@color/primary</item>
+    </style>
+
     <style name="Theme.PocketBrain.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
 
     <style name="Theme.PocketBrain.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />

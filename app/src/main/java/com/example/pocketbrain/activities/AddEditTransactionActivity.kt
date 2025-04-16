@@ -3,6 +3,7 @@ package com.example.pocketbrain.activities
 import android.app.Activity
 import android.os.Bundle
 import android.view.MenuItem
+import android.view.View
 import android.widget.ArrayAdapter
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
@@ -74,6 +75,9 @@ class AddEditTransactionActivity : AppCompatActivity(), DatePickerDialog.OnDateS
         selectedDate = Date() // Today
         binding.editDate.setText(DateUtils.formatDate(selectedDate))
         updateCategoryDropdown()
+
+        // Hide delete button in add mode
+        binding.buttonDelete.visibility = View.GONE
     }
 
     private fun setupEditMode(transaction: Transaction) {
@@ -102,6 +106,9 @@ class AddEditTransactionActivity : AppCompatActivity(), DatePickerDialog.OnDateS
             categoryAdapter.getItem(it) == transaction.category
         } ?: 0
         binding.spinnerCategory.setText(transaction.category, false)
+
+        // Show delete button in edit mode
+        binding.buttonDelete.visibility = View.VISIBLE
     }
 
     private fun setupListeners() {
@@ -119,6 +126,29 @@ class AddEditTransactionActivity : AppCompatActivity(), DatePickerDialog.OnDateS
         // Save button
         binding.buttonSave.setOnClickListener {
             saveTransaction()
+        }
+
+        // Delete button
+        binding.buttonDelete.setOnClickListener {
+            showDeleteConfirmationDialog()
+        }
+    }
+
+    private fun showDeleteConfirmationDialog() {
+        AlertDialog.Builder(this)
+            .setTitle("Delete Transaction")
+            .setMessage("Are you sure you want to delete this transaction? This action cannot be undone.")
+            .setPositiveButton("Delete") { _, _ -> deleteTransaction() }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun deleteTransaction() {
+        currentTransaction?.let {
+            dataManager.deleteTransaction(it.id)
+            Toast.makeText(this, "Transaction deleted", Toast.LENGTH_SHORT).show()
+            setResult(Activity.RESULT_OK)
+            finish()
         }
     }
 
