@@ -58,4 +58,5 @@
     <string name="about">About</string>
     <string name="version">Version %1$s</string>
     <string name="app_description">A simple personal finance tracker to help you manage your income, expenses, and budget.</string>
+    <string name="subt">Personal Finance Tracking App\n</string>
 </resources>

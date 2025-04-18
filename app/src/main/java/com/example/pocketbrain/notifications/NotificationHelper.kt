@@ -11,9 +11,6 @@ import androidx.core.app.NotificationManagerCompat
 import com.example.pocketbrain.R
 import com.example.pocketbrain.activities.MainActivity
 
-/**
- * Helper class to manage notifications for budget alerts
- */
 class NotificationHelper(private val context: Context) {
 
     companion object {
@@ -61,7 +58,6 @@ class NotificationHelper(private val context: Context) {
             try {
                 notify(BUDGET_WARNING_NOTIFICATION_ID, notification)
             } catch (e: SecurityException) {
-                // Handle the case when notification permission is not granted
                 e.printStackTrace()
             }
         }
@@ -87,7 +83,6 @@ class NotificationHelper(private val context: Context) {
             try {
                 notify(BUDGET_EXCEEDED_NOTIFICATION_ID, notification)
             } catch (e: SecurityException) {
-                // Handle the case when notification permission is not granted
                 e.printStackTrace()
             }
         }
@@ -113,7 +108,6 @@ class NotificationHelper(private val context: Context) {
             try {
                 notify(EXPENSE_REMINDER_NOTIFICATION_ID, notification)
             } catch (e: SecurityException) {
-                // Handle the case when notification permission is not granted
                 e.printStackTrace()
             }
         }
