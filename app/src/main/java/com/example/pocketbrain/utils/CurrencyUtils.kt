@@ -15,6 +15,7 @@ object CurrencyUtils {
             "GBP" -> Locale.UK
             "JPY" -> Locale.JAPAN
             "INR" -> Locale("en", "IN")
+            "LKR" -> Locale("en", "LK")  // Added Sri Lankan Rupee
             else -> Locale.US  // Default to USD
         }
 
@@ -25,7 +26,7 @@ object CurrencyUtils {
     }
 
     fun getAvailableCurrencies(): List<String> {
-        return listOf("USD", "EUR", "GBP", "JPY", "INR")
+        return listOf("USD", "EUR", "GBP", "JPY", "INR", "LKR") // Added LKR
     }
 
     fun getCurrencySymbol(currencyCode: String): String {
