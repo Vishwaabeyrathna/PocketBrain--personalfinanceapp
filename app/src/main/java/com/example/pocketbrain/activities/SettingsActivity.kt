@@ -14,7 +14,6 @@ import com.example.pocketbrain.BuildConfig
 import com.example.pocketbrain.R
 import com.example.pocketbrain.databinding.ActivitySettingsBinding
 import com.example.pocketbrain.utils.DataManager
-import com.google.gson.Gson
 import java.io.File
 
 class SettingsActivity : AppCompatActivity() {
@@ -24,6 +23,31 @@ class SettingsActivity : AppCompatActivity() {
 
     private val importLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         uri?.let { importData(it) }
+    }
+
+    private val createDocumentLauncher = registerForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
+        uri?.let {
+            try {
+                contentResolver.openOutputStream(uri)?.use { output ->
+                    val calendar = java.util.Calendar.getInstance()
+                    val fileName = "pocketbrain_backup_${calendar.timeInMillis}.json"
+                    val tempFile = File(cacheDir, fileName)
+                    Log.d("SettingsActivity", "Temporary file path: ${tempFile.absolutePath}")
+                    dataManager.exportData(tempFile)
+                    tempFile.inputStream().use { input ->
+                        input.copyTo(output)
+                    }
+                    Toast.makeText(this, "Backup saved to Downloads", Toast.LENGTH_SHORT).show()
+
+                    // Share the file after saving
+                    shareFile(tempFile)
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                Log.e("SettingsActivity", "Export failed: ${e.message}", e)
+                Toast.makeText(this, "Export failed: ${e.message}", Toast.LENGTH_LONG).show()
+            }
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -88,22 +112,24 @@ class SettingsActivity : AppCompatActivity() {
 
     private fun exportData() {
         try {
-            // Create a file in the cache directory
             val calendar = java.util.Calendar.getInstance()
             val fileName = "pocketbrain_backup_${calendar.timeInMillis}.json"
-            val file = File(cacheDir, fileName)
-            Log.d("SettingsActivity", "Export file path: ${file.absolutePath}")
+            createDocumentLauncher.launch(fileName)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Log.e("SettingsActivity", "Export failed: ${e.message}", e)
+            Toast.makeText(this, "Export failed: ${e.message}", Toast.LENGTH_LONG).show()
+        }
+    }
 
-            // Export data using DataManager
-            val exportedFile = dataManager.exportData(file)
-            if (!exportedFile.exists()) {
-                throw Exception("Failed to create backup file")
+    private fun shareFile(file: File) {
+        try {
+            if (!file.exists()) {
+                throw Exception("Backup file not found for sharing")
             }
-
-            // Share the file via FileProvider
             val authority = "${packageName}.fileprovider"
-            val uri = FileProvider.getUriForFile(this, authority, exportedFile)
-            Log.d("SettingsActivity", "File URI: $uri")
+            val uri = FileProvider.getUriForFile(this, authority, file)
+            Log.d("SettingsActivity", "Share file URI: $uri")
 
             val intent = Intent(Intent.ACTION_SEND).apply {
                 type = "application/json"
@@ -114,11 +140,11 @@ class SettingsActivity : AppCompatActivity() {
             }
 
             startActivity(Intent.createChooser(intent, "Share Backup File"))
-            Toast.makeText(this, getString(R.string.backup_created), Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Sharing backup file", Toast.LENGTH_SHORT).show()
         } catch (e: Exception) {
             e.printStackTrace()
-            Log.e("SettingsActivity", "Export failed: ${e.message}", e)
-            Toast.makeText(this, "Backup failed: ${e.message}", Toast.LENGTH_LONG).show()
+            Log.e("SettingsActivity", "Share failed: ${e.message}", e)
+            Toast.makeText(this, "Share failed: ${e.message}", Toast.LENGTH_LONG).show()
         }
     }
 

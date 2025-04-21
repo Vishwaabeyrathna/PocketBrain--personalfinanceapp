@@ -3,7 +3,10 @@
     xmlns:tools="http://schemas.android.com/tools">
 
 
+
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+
 
     <application
         android:allowBackup="true"
@@ -72,7 +75,14 @@
                 android:resource="@xml/provider_paths" />
         </provider>
 
-
+        <receiver
+            android:name=".notifications.BudgetNotificationReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.example.pocketbrain.BUDGET_CHECK" />
+                <action android:name="com.example.pocketbrain.DAILY_REMINDER" />
+            </intent-filter>
+        </receiver>
 
     </application>
 

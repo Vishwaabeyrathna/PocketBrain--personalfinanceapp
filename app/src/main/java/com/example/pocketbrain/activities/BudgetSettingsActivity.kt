@@ -1,5 +1,9 @@
 package com.example.pocketbrain.activities
 
+import android.app.AlarmManager
+import android.app.PendingIntent
+import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import android.view.MenuItem
 import android.widget.ArrayAdapter
@@ -8,10 +12,12 @@ import androidx.appcompat.app.AppCompatActivity
 import com.example.pocketbrain.R
 import com.example.pocketbrain.databinding.ActivityBudgetSettingsBinding
 import com.example.pocketbrain.models.Budget
+import com.example.pocketbrain.notifications.BudgetNotificationReceiver
 import com.example.pocketbrain.notifications.NotificationHelper
 import com.example.pocketbrain.utils.CurrencyUtils
 import com.example.pocketbrain.utils.DataManager
 import com.example.pocketbrain.utils.DateUtils
+import java.util.Calendar
 
 class BudgetSettingsActivity : AppCompatActivity() {
 
@@ -124,6 +130,7 @@ class BudgetSettingsActivity : AppCompatActivity() {
         // Save notification preferences
         dataManager.setNotificationPreferences(enableNotifications, enableReminder)
 
+        // Immediate notifications for instant feedback
         if (enableNotifications) {
             val totalExpense = dataManager.getTotalExpense(currentMonth, currentYear)
             val remaining = amount - totalExpense
@@ -147,10 +154,105 @@ class BudgetSettingsActivity : AppCompatActivity() {
             notificationHelper.showExpenseReminderNotification()
         }
 
+        // Schedule or cancel notifications
+        if (enableNotifications) {
+            scheduleBudgetCheckNotification()
+        } else {
+            cancelBudgetCheckNotification()
+        }
+
+        if (enableReminder) {
+            scheduleDailyReminderNotification()
+        } else {
+            cancelDailyReminderNotification()
+        }
+
         Toast.makeText(this, "Budget settings saved", Toast.LENGTH_SHORT).show()
 
         setResult(RESULT_OK)
         finish()
+    }
+
+    private fun scheduleBudgetCheckNotification() {
+        val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        val intent = Intent(this, BudgetNotificationReceiver::class.java).apply {
+            action = "com.example.pocketbrain.BUDGET_CHECK"
+        }
+
+        val pendingIntent = PendingIntent.getBroadcast(
+            this, 0, intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        // Schedule daily at 8 PM
+        val calendar = Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, 20) // 8 PM
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            if (before(Calendar.getInstance())) {
+                add(Calendar.DAY_OF_MONTH, 1)
+            }
+        }
+
+        alarmManager.setRepeating(
+            AlarmManager.RTC_WAKEUP,
+            calendar.timeInMillis,
+            AlarmManager.INTERVAL_DAY,
+            pendingIntent
+        )
+    }
+
+    private fun cancelBudgetCheckNotification() {
+        val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        val intent = Intent(this, BudgetNotificationReceiver::class.java).apply {
+            action = "com.example.pocketbrain.BUDGET_CHECK"
+        }
+        val pendingIntent = PendingIntent.getBroadcast(
+            this, 0, intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        alarmManager.cancel(pendingIntent)
+    }
+
+    private fun scheduleDailyReminderNotification() {
+        val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        val intent = Intent(this, BudgetNotificationReceiver::class.java).apply {
+            action = "com.example.pocketbrain.DAILY_REMINDER"
+        }
+
+        val pendingIntent = PendingIntent.getBroadcast(
+            this, 1, intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        // Schedule daily at 9 AM
+        val calendar = Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, 9) // 9 AM
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            if (before(Calendar.getInstance())) {
+                add(Calendar.DAY_OF_MONTH, 1)
+            }
+        }
+
+        alarmManager.setRepeating(
+            AlarmManager.RTC_WAKEUP,
+            calendar.timeInMillis,
+            AlarmManager.INTERVAL_DAY,
+            pendingIntent
+        )
+    }
+
+    private fun cancelDailyReminderNotification() {
+        val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        val intent = Intent(this, BudgetNotificationReceiver::class.java).apply {
+            action = "com.example.pocketbrain.DAILY_REMINDER"
+        }
+        val pendingIntent = PendingIntent.getBroadcast(
+            this, 1, intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        alarmManager.cancel(pendingIntent)
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {

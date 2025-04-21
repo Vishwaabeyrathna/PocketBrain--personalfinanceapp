@@ -16,8 +16,8 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.pocketbrain.R
 import com.example.pocketbrain.adapters.TransactionAdapter
 import com.example.pocketbrain.databinding.ActivityMainBinding
-import com.example.pocketbrain.models.Budget
 import com.example.pocketbrain.models.Transaction
+import com.example.pocketbrain.notifications.NotificationHelper
 import com.example.pocketbrain.utils.CurrencyUtils
 import com.example.pocketbrain.utils.DataManager
 import com.example.pocketbrain.utils.DateUtils
@@ -27,6 +27,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private lateinit var dataManager: DataManager
     private lateinit var transactionAdapter: TransactionAdapter
+    private lateinit var notificationHelper: NotificationHelper
 
     private var currentMonth = DateUtils.getCurrentMonth()
     private var currentYear = DateUtils.getCurrentYear()
@@ -36,12 +37,14 @@ class MainActivity : AppCompatActivity() {
     private val addTransactionLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == RESULT_OK) {
             updateUI()
+            checkBudgetStatus()
         }
     }
 
     private val editTransactionLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == RESULT_OK) {
             updateUI()
+            checkBudgetStatus()
         }
     }
 
@@ -65,6 +68,7 @@ class MainActivity : AppCompatActivity() {
         setSupportActionBar(binding.toolbar)
 
         dataManager = DataManager.getInstance(this)
+        notificationHelper = NotificationHelper(this)
         currencyCode = dataManager.getCurrency()
 
         // Request notification permission
@@ -122,6 +126,30 @@ class MainActivity : AppCompatActivity() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
                 requestNotificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            }
+        }
+    }
+
+    private fun checkBudgetStatus() {
+        val (enableNotifications, _) = dataManager.getNotificationPreferences()
+        if (!enableNotifications) return
+
+        val budget = dataManager.getBudget()
+        if (budget != null && budget.month == currentMonth && budget.year == currentYear) {
+            val totalExpense = dataManager.getTotalExpense(currentMonth, currentYear)
+            val remaining = budget.amount - totalExpense
+            val currencySymbol = CurrencyUtils.getCurrencySymbol(dataManager.getCurrency())
+
+            if (remaining < 0) {
+                notificationHelper.showBudgetExceededNotification(
+                    Math.abs(remaining),
+                    currencySymbol
+                )
+            } else if (remaining < (budget.amount * 0.2)) {
+                notificationHelper.showBudgetWarningNotification(
+                    remaining,
+                    currencySymbol
+                )
             }
         }
     }

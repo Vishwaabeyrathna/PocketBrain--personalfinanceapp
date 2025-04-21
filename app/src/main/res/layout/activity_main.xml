@@ -16,8 +16,9 @@
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
-            android:background="?attr/colorPrimary"
-            app:popupTheme="@style/Theme.PocketBrain.PopupOverlay" />
+            android:background="@color/purple_200"
+            app:popupTheme="@style/Theme.PocketBrain.PopupOverlay"
+            app:subtitleTextColor="@color/black" />
 
     </com.google.android.material.appbar.AppBarLayout>
 
