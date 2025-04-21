@@ -1,6 +1,5 @@
 package com.example.pocketbrain.activities
 
-import android.app.Activity
 import android.os.Bundle
 import android.view.MenuItem
 import android.widget.ArrayAdapter
@@ -48,6 +47,9 @@ class BudgetSettingsActivity : AppCompatActivity() {
         // Load existing budget
         loadBudget()
 
+        // Load notification preferences
+        loadNotificationPreferences()
+
         // Setup save button
         binding.buttonSaveBudget.setOnClickListener {
             saveBudget()
@@ -72,6 +74,12 @@ class BudgetSettingsActivity : AppCompatActivity() {
             // No budget set for this month
             binding.editBudgetAmount.setText("")
         }
+    }
+
+    private fun loadNotificationPreferences() {
+        val (enableNotifications, enableReminder) = dataManager.getNotificationPreferences()
+        binding.switchEnableNotifications.isChecked = enableNotifications
+        binding.switchExpenseReminder.isChecked = enableReminder
     }
 
     private fun saveBudget() {
@@ -113,8 +121,9 @@ class BudgetSettingsActivity : AppCompatActivity() {
         val enableNotifications = binding.switchEnableNotifications.isChecked
         val enableReminder = binding.switchExpenseReminder.isChecked
 
-        // Here you would typically store these preferences and setup alarms
-        // For simplicity, just show a test notification if enabled
+        // Save notification preferences
+        dataManager.setNotificationPreferences(enableNotifications, enableReminder)
+
         if (enableNotifications) {
             val totalExpense = dataManager.getTotalExpense(currentMonth, currentYear)
             val remaining = amount - totalExpense
@@ -135,13 +144,12 @@ class BudgetSettingsActivity : AppCompatActivity() {
         }
 
         if (enableReminder) {
-            // In a real app, you'd schedule a daily alarm here
             notificationHelper.showExpenseReminderNotification()
         }
 
         Toast.makeText(this, "Budget settings saved", Toast.LENGTH_SHORT).show()
 
-        setResult(Activity.RESULT_OK)
+        setResult(RESULT_OK)
         finish()
     }
 

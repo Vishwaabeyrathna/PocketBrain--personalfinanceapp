@@ -6,12 +6,12 @@ import com.example.pocketbrain.models.Budget
 import com.example.pocketbrain.models.Category
 import com.example.pocketbrain.models.Transaction
 import com.google.gson.Gson
+import com.google.gson.JsonSyntaxException
 import com.google.gson.reflect.TypeToken
 import java.io.File
 import java.io.FileOutputStream
 import java.io.FileReader
 import java.util.Calendar
-import java.util.Date
 
 /**
  * Utility class to manage data persistence using SharedPreferences
@@ -27,6 +27,8 @@ class DataManager private constructor(context: Context) {
         private const val KEY_CATEGORIES = "categories"
         private const val KEY_BUDGET = "budget"
         private const val KEY_CURRENCY = "currency"
+        private const val KEY_ENABLE_NOTIFICATIONS = "enable_notifications"
+        private const val KEY_ENABLE_REMINDER = "enable_reminder"
 
         @Volatile
         private var instance: DataManager? = null
@@ -69,9 +71,14 @@ class DataManager private constructor(context: Context) {
     }
 
     fun getTransactions(): List<Transaction> {
-        val json = sharedPreferences.getString(KEY_TRANSACTIONS, "[]")
+        val json = sharedPreferences.getString(KEY_TRANSACTIONS, "[]") ?: "[]"
         val type = object : TypeToken<List<Transaction>>() {}.type
-        return gson.fromJson(json, type) ?: listOf()
+        return try {
+            gson.fromJson(json, type) ?: listOf()
+        } catch (e: JsonSyntaxException) {
+            e.printStackTrace()
+            listOf()
+        }
     }
 
     private fun saveTransactions(transactions: List<Transaction>) {
@@ -94,9 +101,14 @@ class DataManager private constructor(context: Context) {
     }
 
     fun getCategories(): List<Category> {
-        val json = sharedPreferences.getString(KEY_CATEGORIES, "[]")
+        val json = sharedPreferences.getString(KEY_CATEGORIES, "[]") ?: "[]"
         val type = object : TypeToken<List<Category>>() {}.type
-        return gson.fromJson(json, type) ?: listOf()
+        return try {
+            gson.fromJson(json, type) ?: listOf()
+        } catch (e: JsonSyntaxException) {
+            e.printStackTrace()
+            listOf()
+        }
     }
 
     private fun saveCategories(categories: List<Category>) {
@@ -126,7 +138,12 @@ class DataManager private constructor(context: Context) {
 
     fun getBudget(): Budget? {
         val json = sharedPreferences.getString(KEY_BUDGET, null) ?: return null
-        return gson.fromJson(json, Budget::class.java)
+        return try {
+            gson.fromJson(json, Budget::class.java)
+        } catch (e: JsonSyntaxException) {
+            e.printStackTrace()
+            null
+        }
     }
 
     // Currency methods
@@ -138,22 +155,33 @@ class DataManager private constructor(context: Context) {
         return sharedPreferences.getString(KEY_CURRENCY, "USD") ?: "USD"
     }
 
-    // Backup methods
-    fun exportData(): File {
-        val calendar = Calendar.getInstance()
-        val fileName = "pocketbrain_backup_${calendar.timeInMillis}.json"
-        val file = File(appContext.filesDir, fileName)
+    // Notification preference methods
+    fun setNotificationPreferences(enableNotifications: Boolean, enableReminder: Boolean) {
+        sharedPreferences.edit()
+            .putBoolean(KEY_ENABLE_NOTIFICATIONS, enableNotifications)
+            .putBoolean(KEY_ENABLE_REMINDER, enableReminder)
+            .apply()
+    }
 
+    fun getNotificationPreferences(): Pair<Boolean, Boolean> {
+        val enableNotifications = sharedPreferences.getBoolean(KEY_ENABLE_NOTIFICATIONS, false)
+        val enableReminder = sharedPreferences.getBoolean(KEY_ENABLE_REMINDER, false)
+        return Pair(enableNotifications, enableReminder)
+    }
+
+    // Backup methods
+    fun exportData(file: File): File {
         val data = mapOf(
             "transactions" to getTransactions(),
             "categories" to getCategories(),
             "budget" to getBudget(),
-            "currency" to getCurrency()
+            "currency" to getCurrency(),
+            "enable_notifications" to sharedPreferences.getBoolean(KEY_ENABLE_NOTIFICATIONS, false),
+            "enable_reminder" to sharedPreferences.getBoolean(KEY_ENABLE_REMINDER, false)
         )
 
         val json = gson.toJson(data)
         FileOutputStream(file).use { it.write(json.toByteArray()) }
-
         return file
     }
 
@@ -183,6 +211,14 @@ class DataManager private constructor(context: Context) {
                 setCurrency(it.toString())
             }
 
+            data["enable_notifications"]?.let {
+                sharedPreferences.edit().putBoolean(KEY_ENABLE_NOTIFICATIONS, it as Boolean).apply()
+            }
+
+            data["enable_reminder"]?.let {
+                sharedPreferences.edit().putBoolean(KEY_ENABLE_REMINDER, it as Boolean).apply()
+            }
+
             true
         } catch (e: Exception) {
             e.printStackTrace()
@@ -195,8 +231,12 @@ class DataManager private constructor(context: Context) {
         val cal = Calendar.getInstance()
 
         return getTransactions().filter { transaction ->
-            cal.time = transaction.date
-            cal.get(Calendar.MONTH) == month && cal.get(Calendar.YEAR) == year
+            try {
+                cal.time = transaction.date
+                cal.get(Calendar.MONTH) == month && cal.get(Calendar.YEAR) == year
+            } catch (e: Exception) {
+                false // Skip invalid transactions
+            }
         }
     }
 

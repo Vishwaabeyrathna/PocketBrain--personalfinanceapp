@@ -1,12 +1,17 @@
 package com.example.pocketbrain.activities
 
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
+import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.pocketbrain.R
 import com.example.pocketbrain.adapters.TransactionAdapter
@@ -46,6 +51,12 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private val requestNotificationPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
+        if (!isGranted) {
+            Toast.makeText(this, "Notification permission denied. Some features may not work.", Toast.LENGTH_LONG).show()
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -55,6 +66,9 @@ class MainActivity : AppCompatActivity() {
 
         dataManager = DataManager.getInstance(this)
         currencyCode = dataManager.getCurrency()
+
+        // Request notification permission
+        requestNotificationPermission()
 
         // Setup month navigation
         binding.textCurrentMonth.text = DateUtils.getMonthYearString(currentMonth, currentYear)
@@ -102,6 +116,14 @@ class MainActivity : AppCompatActivity() {
         }
 
         updateUI()
+    }
+
+    private fun requestNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                requestNotificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            }
+        }
     }
 
     override fun onResume() {
@@ -195,6 +217,4 @@ class MainActivity : AppCompatActivity() {
             else -> super.onOptionsItemSelected(item)
         }
     }
-
-
 }
