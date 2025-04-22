@@ -16,7 +16,7 @@
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
-            android:background="@color/purple_200"
+            android:background="#240E3C"
             app:popupTheme="@style/Theme.PocketBrain.PopupOverlay"
             app:subtitleTextColor="@color/black" />
 

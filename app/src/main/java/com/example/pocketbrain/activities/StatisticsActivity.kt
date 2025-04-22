@@ -38,6 +38,8 @@ class StatisticsActivity : AppCompatActivity() {
         binding = FragmentStatisticsBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        // Set the custom toolbar as the action bar
+        setSupportActionBar(binding.toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         supportActionBar?.title = "Statistics"
 
